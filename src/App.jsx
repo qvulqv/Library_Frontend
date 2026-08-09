@@ -1,46 +1,66 @@
-import { useState } from 'react'
-import Login from './components/Login'
-import './App.css'
+import { useState } from 'react';
+import axios from 'axios';
 
-function App() {
-    // Lấy vai trò từ bộ nhớ trình duyệt (nếu người dùng đã đăng nhập trước đó)
-    const [vaiTro, setVaiTro] = useState(localStorage.getItem('vaiTro'))
+function Login({ onLoginSuccess }) {
+    const [tenDangNhap, setTenDangNhap] = useState('');
+    const [matKhau, setMatKhau] = useState('');
+    const [loi, setLoi] = useState('');
 
-    // Hàm nhận tín hiệu từ màn hình Login báo về
-    const xuLyDangNhapThanhCong = (vaiTroMoi) => {
-        setVaiTro(vaiTroMoi);
-    }
+    const xuLyDangNhap = (e) => {
+        e.preventDefault();
+        setLoi('');
 
-    // Hàm xóa dữ liệu để đăng xuất
-    const dangXuat = () => {
-        localStorage.removeItem('vaiTro');
-        setVaiTro(null);
-    }
+        axios.post('http://127.0.0.1:8000/dang-nhap', {
+            TenDangNhap: tenDangNhap,
+            MatKhau: matKhau
+        })
+            .then((phanHoi) => {
+                // Chỉ lấy vai trò từ backend
+                const vaiTro = phanHoi.data.vai_tro;
 
-    // Nếu biến vaiTro bị rỗng (chưa đăng nhập) -> Ép hiển thị màn hình Login
-    if (!vaiTro) {
-        return <Login onLoginSuccess={xuLyDangNhapThanhCong} />
-    }
+                // Lưu trực tiếp biến state tenDangNhap vào bộ nhớ
+                localStorage.setItem('vaiTro', vaiTro);
+                localStorage.setItem('tenDangNhap', tenDangNhap);
 
-    // Nếu đã đăng nhập thành công, hiển thị giao diện Dashboard
+                // Gửi CẢ 2 tham số lên tệp App.jsx
+                onLoginSuccess(vaiTro, tenDangNhap);
+            })
+            .catch((error) => {
+                setLoi('Tên đăng nhập hoặc mật khẩu không chính xác!');
+            });
+    };
+
     return (
-        <div className="container" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
-                <h1>Hệ thống Quản lý Thư viện</h1>
-                <div>
-                    <span style={{ marginRight: '15px' }}>Xin chào! Quyền của bạn: <strong>{vaiTro}</strong></span>
-                    <button onClick={dangXuat} style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px' }}>Đăng xuất</button>
-                </div>
-            </div>
+        <div style={{ maxWidth: '400px', margin: '50px auto', textAlign: 'center', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
+            <h2>Đăng Nhập Thư Viện</h2>
 
-            <div style={{ marginTop: '20px' }}>
-                {/* Chúng ta sẽ sử dụng các câu lệnh IF để hiển thị tính năng theo vai trò ở đây */}
-                {vaiTro === 'GiamDoc' && <h2>Đây là khu vực Báo cáo dành riêng cho Giám Đốc</h2>}
-                {vaiTro === 'ThuThu' && <h2>Đây là khu vực Quản lý Mượn Trả dành cho Thủ Thư</h2>}
-                {vaiTro === 'BanDoc' && <h2>Đây là khu vực Tra cứu Sách dành cho Bạn Đọc</h2>}
-            </div>
+            {loi && <p style={{ color: 'red' }}>{loi}</p>}
+
+            <form onSubmit={xuLyDangNhap}>
+                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Tên đăng nhập:</label>
+                    <input
+                        type="text"
+                        value={tenDangNhap}
+                        onChange={(e) => setTenDangNhap(e.target.value)}
+                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                    />
+                </div>
+                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>Mật khẩu:</label>
+                    <input
+                        type="password"
+                        value={matKhau}
+                        onChange={(e) => setMatKhau(e.target.value)}
+                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                    />
+                </div>
+                <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    Đăng Nhập
+                </button>
+            </form>
         </div>
-    )
+    );
 }
 
-export default App
+export default Login;
