@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import QuanLyBanDoc from './QuanLyBanDoc/quan_li_ban_doc';
+import QuanLyDanhMuc from './QuanLyDanhMuc/QuanLyDanhMuc';
 function ThuThuDashboard() {
     // Biến ghi nhớ chức năng đang được mở. Rỗng ('') nghĩa là đang ở màn hình chính.
     const [chucNangDangChon, setChucNangDangChon] = useState('');
@@ -92,7 +93,7 @@ function ThuThuDashboard() {
                 {chucNangDangChon === 'ThongKe' && <h2 style={{ color: '#17a2b8' }}>Khu vực Biểu đồ & Thống kê</h2>}
                 {chucNangDangChon === 'MuonTra' && <h2 style={{ color: '#28a745' }}>Khu vực Duyệt phiếu & Mượn trả sách</h2>}
                 {chucNangDangChon === 'KhoSach' && <h2 style={{ color: '#ffc107' }}>Khu vực Thêm, sửa, xóa sách trong kho</h2>}
-                {chucNangDangChon === 'DanhMuc' && <h2 style={{ color: '#fd7e14' }}>Khu vực Quản lý Kệ sách, Tác giả, Thể loại</h2>}
+                {chucNangDangChon === 'DanhMuc' && <QuanLyDanhMuc/>}
                 {chucNangDangChon === 'BanDoc' && <QuanLyBanDoc />}
                 {chucNangDangChon === 'Phat' && <QuanLyBanDoc/>}
                 {chucNangDangChon === 'ThongBao' && <h2 style={{ color: '#20c997' }}>Khu vực Nhắc nhở & Gửi thông báo</h2>}
