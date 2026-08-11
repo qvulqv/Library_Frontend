@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import QuanLyBanDoc from './QuanLyBanDoc/quan_li_ban_doc';
 import QuanLyDanhMuc from './QuanLyDanhMuc/QuanLyDanhMuc';
+
 function ThuThuDashboard() {
     // Biến ghi nhớ chức năng đang được mở. Rỗng ('') nghĩa là đang ở màn hình chính.
     const [chucNangDangChon, setChucNangDangChon] = useState('');
