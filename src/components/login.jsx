@@ -26,7 +26,18 @@ function Login({ onLoginSuccess }) {
                 onLoginSuccess(vaiTro, tenDangNhap);
             })
             .catch((error) => {
-                setLoi('Tên đăng nhập hoặc mật khẩu không chính xác!');
+                console.error("Nhật ký lỗi chi tiết:", error);
+
+                if (error.response) {
+                    // Trường hợp 1: Backend nhận được dữ liệu nhưng từ chối (ví dụ: sai mật khẩu, lỗi code 500)
+                    setLoi(`Máy chủ từ chối: Lỗi ${error.response.status}`);
+                } else if (error.request) {
+                    // Trường hợp 2: Bị trình duyệt chặn (CORS) hoặc Backend chưa mở đúng cổng
+                    setLoi('Lỗi mạng: Không thể kết nối đến máy chủ Backend!');
+                } else {
+                    // Trường hợp 3: Lỗi phát sinh từ chính React
+                    setLoi('Đã xảy ra sự cố trên giao diện!');
+                }
             });
     };
 

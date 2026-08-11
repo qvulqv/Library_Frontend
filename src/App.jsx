@@ -1,66 +1,86 @@
 import { useState } from 'react';
-import axios from 'axios';
+import Login from './components/Login';
+import ThuThuDashboard from './components/ThuThuDashboard/ThuThuDashboard';
+import './App.css';
+import LogoOU from './assets/LogoOU.png';
 
-function Login({ onLoginSuccess }) {
-    const [tenDangNhap, setTenDangNhap] = useState('');
-    const [matKhau, setMatKhau] = useState('');
-    const [loi, setLoi] = useState('');
+function App() {
+    const [vaiTro, setVaiTro] = useState(localStorage.getItem('vaiTro'));
+    const [name, setName] = useState(localStorage.getItem('tenDangNhap'));
 
-    const xuLyDangNhap = (e) => {
-        e.preventDefault();
-        setLoi('');
-
-        axios.post('http://127.0.0.1:8000/dang-nhap', {
-            TenDangNhap: tenDangNhap,
-            MatKhau: matKhau
-        })
-            .then((phanHoi) => {
-                // Chỉ lấy vai trò từ backend
-                const vaiTro = phanHoi.data.vai_tro;
-
-                // Lưu trực tiếp biến state tenDangNhap vào bộ nhớ
-                localStorage.setItem('vaiTro', vaiTro);
-                localStorage.setItem('tenDangNhap', tenDangNhap);
-
-                // Gửi CẢ 2 tham số lên tệp App.jsx
-                onLoginSuccess(vaiTro, tenDangNhap);
-            })
-            .catch((error) => {
-                setLoi('Tên đăng nhập hoặc mật khẩu không chính xác!');
-            });
+    const xuLyDangNhapThanhCong = (vaiTroMoi, tenDangNhapMoi) => {
+        setVaiTro(vaiTroMoi);
+        setName(tenDangNhapMoi);
     };
 
+    const dangXuat = () => {
+        localStorage.removeItem('vaiTro');
+        localStorage.removeItem('tenDangNhap');
+        setVaiTro(null);
+        setName(null);
+    };
+
+    
+    if (!vaiTro) {
+        return <Login onLoginSuccess={xuLyDangNhapThanhCong} />;
+    }
+
     return (
-        <div style={{ maxWidth: '400px', margin: '50px auto', textAlign: 'center', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
-            <h2>Đăng Nhập Thư Viện</h2>
+        <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f4f7f6', minHeight: '100vh', margin: '-8px', padding: '20px' }}>
 
-            {loi && <p style={{ color: 'red' }}>{loi}</p>}
+            {/* KHU VỰC HEADER CÓ LOGO */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: 'white',
+                padding: '15px 30px',
+                borderRadius: '10px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                marginBottom: '25px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <img
+                        src={LogoOU}
+                        alt="Logo Đại học Mở TP.HCM"
+                        style={{ height: '65px', objectFit: 'contain' }}
+                    />
+                    <h1 style={{ margin: 0, color: '#004085', fontSize: '24px', textTransform: 'uppercase' }}>
+                        Hệ thống Quản lý Thư viện
+                    </h1>
+                </div>
 
-            <form onSubmit={xuLyDangNhap}>
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Tên đăng nhập:</label>
-                    <input
-                        type="text"
-                        value={tenDangNhap}
-                        onChange={(e) => setTenDangNhap(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                    />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <span style={{ fontSize: '16px', color: '#555' }}>
+                        Xin chào <strong style={{ color: '#d9534f', fontSize: '18px' }}>{name}</strong>
+                    </span>
+                    <button
+                        onClick={dangXuat}
+                        style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            transition: 'background-color 0.3s'
+                        }}
+                    >
+                        Đăng xuất
+                    </button>
                 </div>
-                <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Mật khẩu:</label>
-                    <input
-                        type="password"
-                        value={matKhau}
-                        onChange={(e) => setMatKhau(e.target.value)}
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-                    />
-                </div>
-                <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Đăng Nhập
-                </button>
-            </form>
+            </div>
+
+            {/* KHU VỰC NỘI DUNG THAY ĐỔI THEO QUYỀN */}
+            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                {vaiTro === 'GiamDoc' && <h2>Đây là khu vực Báo cáo dành riêng cho Giám Đốc</h2>}
+                {vaiTro === 'ThuThu' && <ThuThuDashboard />}
+                {vaiTro === 'BanDoc' && <h2>Đây là khu vực Tra cứu Sách dành cho Bạn Đọc</h2>}
+            </div>
+
         </div>
     );
 }
 
-export default Login;
+export default App;
