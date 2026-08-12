@@ -3,6 +3,7 @@ import QuanLyTacGia from './QuanLyTacGia';
 import QuanLyTheLoai from './QuanLyTheLoai';
 import QuanLyNXB from './QuanLyNXB';
 import QuanLyKeSach from './QuanLyKeSach';
+import QuanLyDauSach from './QuanLyDauSach';
 function QuanLyDanhMuc() {
     // Biến điều hướng: Lưu trữ xem Thủ thư đang chọn xem danh mục nào
     const [danhMucDangChon, setDanhMucDangChon] = useState('');
@@ -61,7 +62,7 @@ function QuanLyDanhMuc() {
             </button>
 
             {/* Khu vực hiển thị nội dung chi tiết tương ứng với lựa chọn */}
-            {danhMucDangChon === 'DauSach' && <h3 style={{ color: '#007bff' }}>Khu vực hiển thị danh sách Đầu Sách (Chờ phát triển)</h3>}
+            {danhMucDangChon === 'DauSach' && <QuanLyDauSach />}
             {danhMucDangChon === 'KeSach' && <QuanLyKeSach />}
             {danhMucDangChon === 'TacGia' && <QuanLyTacGia />}
             {danhMucDangChon === 'TheLoai' && <QuanLyTheLoai />}
