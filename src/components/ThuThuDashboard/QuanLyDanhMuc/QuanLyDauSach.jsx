@@ -21,6 +21,17 @@ function QuanLyDauSach() {
     const [duLieuNhapNhanh, setDuLieuNhapNhanh] = useState('');
     const [cheDoSua, setCheDoSua] = useState(false);
 
+    // ==========================================
+    // STATE MỚI: QUẢN LÝ PHÂN TRANG
+    // ==========================================
+    const [trangHienTai, setTrangHienTai] = useState(1);
+    const soLuongMotTrang = 5;
+
+    // Tự động quay về trang 1 khi có thay đổi từ khóa tìm kiếm
+    useEffect(() => {
+        setTrangHienTai(1);
+    }, [tuKhoa]);
+
     // 3. TẢI DỮ LIỆU
     const layTatCaDuLieu = () => {
         axios.get('http://127.0.0.1:8000/dausach').then(res => setDanhSachDauSach(res.data)).catch(err => console.log(err));
@@ -42,7 +53,6 @@ function QuanLyDauSach() {
     const xuLyBamSua = (ds) => {
         setMaDauSach(ds.MaDauSach);
         setTenSach(ds.TenSach);
-        // Map dữ liệu từ Backend thành chuẩn {value, label} của react-select
         setChonTacGia((ds.tac_gia || []).map(tg => ({ value: tg.MaTacGia, label: tg.TenTacGia })));
         setChonTheLoai((ds.the_loai || []).map(tl => ({ value: tl.MaTheLoai, label: tl.TenTheLoai })));
         setChonNXB((ds.nha_xuat_ban || []).map(nxb => ({ value: nxb.MaNXB, label: nxb.TenNXB })));
@@ -93,7 +103,7 @@ function QuanLyDauSach() {
         }
     };
 
-    // 8. THÊM HÀNG LOẠT (Hàm hỗ trợ xử lý chuỗi phân cách bằng dấu phẩy)
+    // 8. THÊM HÀNG LOẠT 
     const xuLyThemHangLoat = () => {
         if (!duLieuNhapNhanh.trim()) return alert("Vui lòng nhập dữ liệu!");
         const dongList = duLieuNhapNhanh.split('\n');
@@ -106,7 +116,6 @@ function QuanLyDauSach() {
                 danhSachGui.push({
                     MaDauSach: parseInt(pt[0]) || 0,
                     TenSach: pt[1],
-                    // Tách chuỗi bằng dấu phẩy, lọc bỏ phần tử rỗng
                     DanhSachMaTacGia: pt[2] ? pt[2].split(',').map(s => s.trim()).filter(s => s) : [],
                     DanhSachMaTheLoai: pt[3] ? pt[3].split(',').map(s => s.trim()).filter(s => s) : [],
                     DanhSachMaNXB: pt[4] ? pt[4].split(',').map(s => parseInt(s.trim())).filter(s => !isNaN(s)) : []
@@ -149,9 +158,25 @@ function QuanLyDauSach() {
         e.target.value = '';
     };
 
+    // ==========================================
+    // LOGIC TÍNH TOÁN PHÂN TRANG 
+    // ==========================================
+    // Bước 1: Lọc dữ liệu theo từ khóa tìm kiếm
     const danhSachDaLoc = danhSachDauSach.filter(ds =>
         ds.TenSach?.toLowerCase().includes(tuKhoa.toLowerCase()) || String(ds.MaDauSach).includes(tuKhoa)
     );
+
+    // Bước 2: Tính tổng số trang
+    const tongSoTrang = Math.ceil(danhSachDaLoc.length / soLuongMotTrang) || 1;
+
+    // Bước 3: Cắt mảng để lấy đúng 30 Đầu sách cho trang hiện tại
+    const viTriBatDau = (trangHienTai - 1) * soLuongMotTrang;
+    const viTriKetThuc = viTriBatDau + soLuongMotTrang;
+    const danhSachHienThi = danhSachDaLoc.slice(viTriBatDau, viTriKetThuc);
+
+    // Hàm điều khiển trang
+    const chuyenTrangTruoc = () => { if (trangHienTai > 1) setTrangHienTai(trangHienTai - 1); };
+    const chuyenTrangSau = () => { if (trangHienTai < tongSoTrang) setTrangHienTai(trangHienTai + 1); };
 
     // ================= GIAO DIỆN CHÍNH =================
     return (
@@ -194,38 +219,68 @@ function QuanLyDauSach() {
                     </form>
                 </div>
 
-                {/* CỘT PHẢI: BẢNG */}
-                <div style={{ flex: '2', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                {/* CỘT PHẢI: BẢNG VÀ PHÂN TRANG */}
+                <div style={{ flex: '2', backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginBottom: '15px' }}>
-                        <h3 style={{ margin: 0 }}>Danh sách Đầu Sách</h3>
+                        <h3 style={{ margin: 0 }}>Danh sách Đầu Sách (Tổng: {danhSachDaLoc.length})</h3>
                         <input type="text" value={tuKhoa} onChange={e => setTuKhoa(e.target.value)} placeholder="🔍 Tìm kiếm..." style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }} />
                     </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ backgroundColor: '#f8f9fa' }}>
-                                <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6' }}>Mã</th>
-                                <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6', textAlign: 'left' }}>Tên Sách</th>
-                                <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6' }}>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {danhSachDaLoc.map((ds, idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid #e9ecef', backgroundColor: (cheDoSua && parseInt(maDauSach) === ds.MaDauSach) ? '#fff3cd' : 'transparent' }}>
-                                    <td style={{ padding: '10px', textAlign: 'center' }}><strong>{ds.MaDauSach}</strong></td>
-                                    <td style={{ padding: '10px' }}>
-                                        <div style={{ fontWeight: 'bold' }}>{ds.TenSach}</div>
-                                        <div style={{ fontSize: '12px', color: '#666' }}>
-                                            TG: {ds.tac_gia?.map(t => t.TenTacGia).join(', ') || '---'}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '10px', textAlign: 'center' }}>
-                                        <button onClick={() => xuLyBamSua(ds)} style={{ padding: '5px 10px', backgroundColor: '#ffc107', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}>✏️ Sửa</button>
-                                        <button onClick={() => xuLyXoa(ds.MaDauSach)} style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️ Xóa</button>
-                                    </td>
+
+                    {/* Bảng dữ liệu - Cập nhật để lặp qua danhSachHienThi */}
+                    <div style={{ flex: '1', overflowY: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                    <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6' }}>Mã</th>
+                                    <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6', textAlign: 'left' }}>Tên Sách</th>
+                                    <th style={{ padding: '10px', borderBottom: '2px solid #dee2e6' }}>Hành động</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {danhSachHienThi.map((ds, idx) => (
+                                    <tr key={idx} style={{ borderBottom: '1px solid #e9ecef', backgroundColor: (cheDoSua && parseInt(maDauSach) === ds.MaDauSach) ? '#fff3cd' : 'transparent' }}>
+                                        <td style={{ padding: '10px', textAlign: 'center' }}><strong>{ds.MaDauSach}</strong></td>
+                                        <td style={{ padding: '10px' }}>
+                                            <div style={{ fontWeight: 'bold' }}>{ds.TenSach}</div>
+                                            <div style={{ fontSize: '12px', color: '#666' }}>
+                                                TG: {ds.tac_gia?.map(t => t.TenTacGia).join(', ') || '---'}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '10px', textAlign: 'center' }}>
+                                            <button onClick={() => xuLyBamSua(ds)} style={{ padding: '5px 10px', backgroundColor: '#ffc107', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '5px', fontSize: '12px' }}>✏️ Sửa</button>
+                                            <button onClick={() => xuLyXoa(ds.MaDauSach)} style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️ Xóa</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {danhSachHienThi.length === 0 && (
+                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Không tìm thấy Đầu sách nào.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* KHU VỰC NÚT BẤM PHÂN TRANG */}
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #eee' }}>
+                        <button
+                            onClick={chuyenTrangTruoc}
+                            disabled={trangHienTai === 1}
+                            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: trangHienTai === 1 ? '#f8f9fa' : 'white', cursor: trangHienTai === 1 ? 'not-allowed' : 'pointer' }}
+                        >
+                            ◀ Trước
+                        </button>
+
+                        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#555' }}>
+                            Trang {trangHienTai} / {tongSoTrang}
+                        </span>
+
+                        <button
+                            onClick={chuyenTrangSau}
+                            disabled={trangHienTai === tongSoTrang}
+                            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: trangHienTai === tongSoTrang ? '#f8f9fa' : 'white', cursor: trangHienTai === tongSoTrang ? 'not-allowed' : 'pointer' }}
+                        >
+                            Sau ▶
+                        </button>
+                    </div>
                 </div>
             </div>
 
